@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>iks-oks</title>
+		<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<div>
+		<label>AI igra prvi ili drugi<input type="number" id="red" value="1" min="1" max="2" style="width: 50px"></label>
+		<button id="ok">OK</button>
+	</div>	
+	<canvas id="canvas" height="450px" width="450px"></canvas>
+</body>
+<script type="text/javascript">
+	 var c=document.getElementById("canvas");
+	 var ctx=c.getContext("2d");
+
+        function podloga() {
+	   	   ctx.lineWidth=5;
+		   ctx.strokeStyle="rgba(0, 0, 0, 0.8)";
+				for(let i=0; i<3; i++){
+					for(let j=0; j<3; j++){
+						ctx.strokeRect(j*150, i*150, 150, 150);
+					}
+				}
+		}
+		podloga();
+
+		function crtajx(x, y){
+			ctx.strokeStyle="orange";
+			ctx.beginPath();
+			ctx.moveTo(x+20, y+20);
+			ctx.lineTo(x+130, y+130, 110, 110);
+			ctx.moveTo(x+130, y+20);
+			ctx.lineTo(x+20, y+130, 110, 110);
+			ctx.stroke();
+		}
+		function crtajo(x, y){
+			ctx.strokeStyle="orange";
+			ctx.beginPath();
+			ctx.arc(x+75, y+75, 50, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
+
+		var turnxo="x";
+		var aiJe=""; 
+
+		var zauzetix=[];
+		var zauzetio=[];
+
+		function pobjedaZaX(zauzetix){
+		    if((sadrzi2(0, 0, zauzetix) && sadrzi2(150, 0, zauzetix) && sadrzi2(300, 0, zauzetix)) ||
+			   (sadrzi2(0, 150, zauzetix) && sadrzi2(150, 150, zauzetix) && sadrzi2(300, 150, zauzetix)) ||
+			   (sadrzi2(0, 300, zauzetix) && sadrzi2(150, 300, zauzetix) && sadrzi2(300, 300, zauzetix)) ||
+			   (sadrzi2(0, 0, zauzetix) && sadrzi2(0, 150, zauzetix) && sadrzi2(0, 300, zauzetix)) ||
+			   (sadrzi2(150, 0, zauzetix) && sadrzi2(150, 150, zauzetix) && sadrzi2(150, 300, zauzetix)) ||
+			   (sadrzi2(300, 0, zauzetix) && sadrzi2(300, 150, zauzetix) && sadrzi2(300, 300, zauzetix)) ||
+			   (sadrzi2(0, 0, zauzetix) && sadrzi2(150, 150, zauzetix) && sadrzi2(300, 300, zauzetix)) ||
+			   (sadrzi2(300, 0, zauzetix) && sadrzi2(150, 150, zauzetix) && sadrzi2(0, 300, zauzetix)) ){
+				return true;
+			}else{
+				return false;
+			}
+		}
+
+		function pobjedaZaO(zauzetio){
+		    if((sadrzi2(0, 0, zauzetio) && sadrzi2(150, 0, zauzetio) && sadrzi2(300, 0, zauzetio)) ||
+			   (sadrzi2(0, 150, zauzetio) && sadrzi2(150, 150, zauzetio) && sadrzi2(300, 150, zauzetio)) ||
+			   (sadrzi2(0, 300, zauzetio) && sadrzi2(150, 300, zauzetio) && sadrzi2(300, 300, zauzetio)) ||
+			   (sadrzi2(0, 0, zauzetio) && sadrzi2(0, 150, zauzetio) && sadrzi2(0, 300, zauzetio)) ||
+			   (sadrzi2(150, 0, zauzetio) && sadrzi2(150, 150, zauzetio) && sadrzi2(150, 300, zauzetio)) ||
+			   (sadrzi2(300, 0, zauzetio) && sadrzi2(300, 150, zauzetio) && sadrzi2(300, 300, zauzetio)) ||
+			   (sadrzi2(0, 0, zauzetio) && sadrzi2(150, 150, zauzetio) && sadrzi2(300, 300, zauzetio)) ||
+			   (sadrzi2(300, 0, zauzetio) && sadrzi2(150, 150, zauzetio) && sadrzi2(0, 300, zauzetio)) ){
+		    	return true
+			}else{
+				return false;
+			}
+		}
+
+		function izjednaceno(zauzetix, zauzetio){
+			if(!pobjedaZaO(zauzetio) && !pobjedaZaX(zauzetix) && zauzetix.length+zauzetio.length>=9){
+				return true;
+			}else{
+				return false;
+			}
+		}
+
+		function evaluacijaPloce(zauzetix, zauzetio){
+			var bodovi=150;
+			var prazno=9-zauzetix.length-zauzetio.length;
+			if(aiJe=="x"){
+				if(pobjedaZaX(zauzetix)){
+					bodovi=20+prazno;
+				}else if(pobjedaZaO(zauzetio)){
+					bodovi=-20-prazno;
+				}else if(izjednaceno(zauzetix, zauzetio)){
+					bodovi=0;
+				}
+			}else if(aiJe=="o"){
+				if(pobjedaZaO(zauzetio)){
+					bodovi=20+prazno;
+				}else if(pobjedaZaX(zauzetix)){
+					bodovi=-20-prazno;
+				}else if(izjednaceno(zauzetix, zauzetio)){
+					bodovi=0;
+				}
+			}
+			return bodovi;
+		}
+
+		function minmax(zauzetix, zauzetio, isMax){
+			if(evaluacijaPloce(zauzetix, zauzetio)!=150){
+				return evaluacijaPloce(zauzetix, zauzetio);
+			}
+			if(isMax && aiJe=="x"){
+				let best = -1000;
+				for(let i=0; i<450; i=i+150){
+					for(let j=0; j<450; j=j+150){
+						if(!sadrzi(i, j, zauzetix, zauzetio)){
+							let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetix.push(l);
+							best = Math.max(best, minmax(zauzetix, zauzetio, !isMax));
+							zauzetix.pop();
+						}
+					}
+				}return best;
+			}else if(isMax && aiJe=="o"){
+				let best = -1000;
+				for(let i=0; i<450; i=i+150){
+					for(let j=0; j<450; j=j+150){
+						if(!sadrzi(i, j, zauzetix, zauzetio)){
+							let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetio.push(l);
+							best = Math.max(best, minmax(zauzetix, zauzetio, !isMax));
+							zauzetio.pop();
+						}
+					}
+				}return best;
+			}else if(!isMax && aiJe=="x"){
+				let best = 1000;
+				for(let i=0; i<450; i=i+150){
+					for(let j=0; j<450; j=j+150){
+						if(!sadrzi(i, j, zauzetix, zauzetio)){
+							let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetio.push(l);
+							best = Math.min(best, minmax(zauzetix, zauzetio, !isMax));
+							zauzetio.pop();
+						}
+					}
+				}return best;
+			}else if(!isMax && aiJe=="o"){
+				let best = 1000;
+				for(let i=0; i<450; i=i+150){
+					for(let j=0; j<450; j=j+150){
+						if(!sadrzi(i, j, zauzetix, zauzetio)){
+							let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetix.push(l);
+							best = Math.min(best, minmax(zauzetix, zauzetio, !isMax));
+							zauzetix.pop();
+						}
+					}
+				}return best;				
+			}
+		}
+
+		function findBestMove(zauzetix, zauzetio){
+		    let bestVal = -1000;
+		    let bestMove = [];
+		    bestMove.push(-1);
+		    bestMove.push(-1);
+
+		    for(let i = 0; i < 450; i=i+150){
+		        for(let j = 0; j < 450; j=j+150){// Check if cell is empty
+		            if (!sadrzi(i, j, zauzetix, zauzetio)){
+		                 if(aiJe=="x"){
+		                 	let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetix.push(l);
+							let moveVal = minmax(zauzetix, zauzetio, false);
+							zauzetix.pop();
+						    if (moveVal > bestVal){
+			                    bestMove[0] = i;
+			                    bestMove[1] = j;
+			                    bestVal = moveVal;
+		                    }
+		                 }else if(aiJe=="o"){
+		                 	let l=[];
+							l.push(i);
+							l.push(j);
+							zauzetio.push(l);
+							let moveVal = minmax(zauzetix, zauzetio, false);
+							zauzetio.pop();
+						    if (moveVal > bestVal){
+			                    bestMove[0] = i;
+			                    bestMove[1] = j;
+			                    bestVal = moveVal;
+		                    }
+		                 }
+		            }
+		        }
+		    }return bestMove;
+        }
+
+		$("#ok").on("click", function(){
+			var redai=parseInt($("#red").val());
+			if(redai==1){
+				aiJe="x";
+			}else if(redai==2){
+				aiJe="o";
+			}
+			if(aiJe=="x" && zauzetix.length==0){
+				randomxy=[[0, 0], [300, 0], [150, 150], [0, 300], [300, 300]];
+				var random=Math.floor(Math.random()*5);
+				randomx=randomxy[random][0];
+				randomy=randomxy[random][1];	
+				var timeout = setTimeout(function(){
+					crtajx(randomx, randomy);
+					turnxo="o";
+					let l=[];
+					l.push(randomx);
+					l.push(randomy);
+					zauzetix.push(l);
+				},600);
+			}
+		});
+
+		 $("#canvas").on("click", function(e){
+
+		    elementLeft=c.offsetLeft + c.clientLeft;
+		    elementTop=c.offsetTop + c.clientTop;
+
+			var x=e.pageX-elementLeft;
+			var y=e.pageY-elementTop;
+
+			xk=x-x%150;
+			yk=y-y%150;
+
+		 	if(aiJe=="x" && turnxo=="o"){
+		 		if(!sadrzi(xk, yk, zauzetix, zauzetio)){
+		 			crtajo(xk, yk);
+					turnxo="x";
+					let l=[];
+					l.push(xk);
+					l.push(yk);
+					zauzetio.push(l);
+
+					if(!pobjedaZaO(zauzetio)){
+						var t=setTimeout(function(){
+			 			let trazeno=findBestMove(zauzetix, zauzetio);
+			 			crtajx(trazeno[0], trazeno[1]);
+						turnxo="o";
+						let l=[];
+						l.push(trazeno[0]);
+						l.push(trazeno[1]);
+						zauzetix.push(l); 
+						if(pobjedaZaX(zauzetix))alert("AI je pobijedio");
+					    if(izjednaceno(zauzetix, zauzetio))alert("Izjednačeno je");		
+			 		    },600);
+					}else{
+						var timeout=setTimeout(function(){
+							if(pobjedaZaO(zauzetio))alert("Pobijedili ste");
+						}, 200);
+					}
+		 	    }
+		 	}else if(aiJe=="o" && turnxo=="x"){
+		 		if(!sadrzi(xk, yk, zauzetix, zauzetio)){
+		 			crtajx(xk, yk);
+					turnxo="o";
+					let l=[];
+					l.push(xk);
+					l.push(yk);
+					zauzetix.push(l);
+
+					if(!pobjedaZaX(zauzetix) || !izjednaceno(zauzetix, zauzetio)){
+						var t=setTimeout(function(){
+			 			let trazeno=findBestMove(zauzetix, zauzetio);
+			 			crtajo(trazeno[0], trazeno[1]);
+						turnxo="x";
+						let l=[];
+						l.push(trazeno[0]);
+						l.push(trazeno[1]);
+						zauzetio.push(l);
+			 		    if(pobjedaZaO(zauzetio))alert("AI je pobijedio");
+			 		    if(izjednaceno(zauzetix, zauzetio))alert("Izjednačeno je");		
+			 		    },600);
+					}else{
+						var timeout=setTimeout(function(){
+							if(pobjedaZaX(zauzetix))alert("Pobijedili ste");
+			 		        if(izjednaceno(zauzetix, zauzetio))alert("Izjednačeno je");
+						}, 200);
+					}
+		 	    }
+		 	}
+		});
+
+		function sadrzi(a, b, niz1, niz2){
+			var niz=niz1.concat(niz2);
+			var boolean=false;
+			for(let i=0; i<niz.length; i++){
+				if(niz[i][0]==a && niz[i][1]==b){
+					boolean=true;
+					return boolean;
+				}
+			}return boolean;
+	    }
+
+	    function sadrzi2(a, b, niz){
+			var boolean=false;
+			for(let i=0; i<niz.length; i++){
+				if(niz[i][0]==a && niz[i][1]==b){
+					boolean=true;
+					return boolean;
+				}
+			}return boolean;
+	    }
+</script>
+</html>
