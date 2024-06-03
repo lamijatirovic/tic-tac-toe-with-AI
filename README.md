@@ -1,1 +1,1 @@
-Tic-tac-toe with implemented minimax algorithm 
+Tic-tac-toe with implemented minimax algorithm in JavaScript
